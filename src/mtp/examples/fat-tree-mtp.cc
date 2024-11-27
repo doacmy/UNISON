@@ -516,10 +516,10 @@ main(int argc, char* argv[])
     uint32_t nAgg = conf::k / 2;  // number of aggregation switch in a pod
     uint32_t nEdge = conf::k / 2; // number of edge switch in a pod
     uint32_t nHost = conf::k / 2; // number of hosts under a switch
-    NodeContainer core[nGroup];
-    NodeContainer agg[nPod];
-    NodeContainer edge[nPod];
-    NodeContainer host[nPod][nEdge];
+    std::vector<NodeContainer> core(nGroup);
+    std::vector<NodeContainer> agg(nPod);
+    std::vector<NodeContainer> edge(nPod);
+    std::vector<std::vector<NodeContainer>> host(nPod, std::vector<NodeContainer>(nEdge));
 
     // create nodes
     for (uint32_t i = 0; i < nGroup; i++)

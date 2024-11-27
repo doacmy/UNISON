@@ -279,7 +279,7 @@ CheckT2QueueSize(Ptr<QueueDisc> queue)
 int
 main(int argc, char* argv[])
 {
-    MtpInterface::Enable (4);
+    MtpInterface::Enable (8);
     std::string outputFilePath = ".";
     std::string tcpTypeId = "TcpDctcp";
     Time flowStartupWindow = Seconds(1);
