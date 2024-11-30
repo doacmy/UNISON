@@ -374,19 +374,20 @@ MultithreadedSimulatorImpl::Partition()
                         TimeValue delay;
                         channel->GetAttribute("Delay", delay);
                         // if delay is below threshold, do not cut-off
-                        if (delay.Get() >= m_minLookahead)
+                        // 将相互之间通信时延低的节点划分为同一个LP，有利于在相同时间窗口中完成更多的事件
+                        // 如果将相互通信时延很低的两个节点划分为不同的LP，则最小前瞻时间也会变得很小，LP之间会处于频繁的同步等待之中
+                        if (delay.Get() < m_minLookahead)
                         {
-                            continue;
-                        }
-                    }
-                    // grab the adjacent nodes
-                    for (uint32_t j = 0; j < channel->GetNDevices(); j++)
-                    {
-                        Ptr<Node> remote = channel->GetDevice(j)->GetNode();
-                        // if it's not visited, add it to the current partition
-                        if (!visited[remote->GetId()])
-                        {
-                            q.push(remote);
+                            for (uint32_t j = 0; j < channel->GetNDevices(); j++)
+                            {
+                                Ptr<Node> remote = channel->GetDevice(j)->GetNode();
+                                // if it's not visited, add it to the current partition
+                                if (!visited[remote->GetId()])
+                                {
+                                    // 此处放入q的节点在出队列q时其systemId无需加一，即将其与当前node划分为同一逻辑进程
+                                    q.push(remote);
+                                }
+                            }
                         }
                     }
                 }
@@ -422,6 +423,7 @@ MultithreadedSimulatorImpl::Partition()
     }
 
     // transfer events to new LPs
+    // 这里是怎么体现多线程的？
     while (!eventsToBeTransferred->IsEmpty())
     {
         Scheduler::Event ev = eventsToBeTransferred->RemoveNext();

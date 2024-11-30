@@ -253,6 +253,7 @@ LogicalProcess::ScheduleWithContext(LogicalProcess* remote,
     }
 }
 
+// 立即执行一个事件，确保事件在当前逻辑进程的上下文中被正确处理，并且在事件处理完成后恢复之前的线程上下文
 void
 LogicalProcess::InvokeNow(const Scheduler::Event& ev)
 {

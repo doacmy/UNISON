@@ -184,6 +184,8 @@ class LogicalProcess
     uint64_t m_eventCount;
     uint64_t m_pendingEventCount;
     Ptr<Scheduler> m_events;
+
+    // 前瞻值，用以确定逻辑进程可以安全地推进到的时间点，而不会导致因果关系错乱
     Time m_lookAhead;
 
     std::map<uint32_t, std::vector<std::tuple<uint64_t, uint32_t, uint32_t, Scheduler::Event>>>

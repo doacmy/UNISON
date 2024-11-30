@@ -79,6 +79,7 @@ MtpInterface::Enable(const uint32_t threadCount, const uint32_t systemCount)
     g_systemCount = systemCount;
 
     // allocate systems
+    // 第一个元素为公共逻辑进程（public LP）
     g_systems = new LogicalProcess[g_systemCount + 1]; // include the public LP
     for (uint32_t i = 0; i <= g_systemCount; i++)
     {
@@ -143,6 +144,7 @@ MtpInterface::EnableNew(const uint32_t newSystemCount)
     g_sortPeriod.GetValue(ui);
     if (ui.Get() == 0)
     {
+        // g_period 决定了逻辑进程排序的频率，单位是“轮次”
         g_period = std::ceil(std::log2(g_systemCount) / 4 + 1);
         NS_LOG_INFO("Secheduling period is automatically set to " << g_period);
     }
@@ -153,8 +155,9 @@ MtpInterface::EnableNew(const uint32_t newSystemCount)
 
     // create a thread local storage key
     // so that we can access the currently assigned LP of each thread
+    // g_systems[0]为公共逻辑进程    
     pthread_key_create(&g_key, nullptr);
-    pthread_setspecific(g_key, &g_systems[0]);
+    pthread_setspecific(g_key, &g_systems[0]);  
 }
 
 void
@@ -220,11 +223,16 @@ MtpInterface::ProcessOneRound()
         std::sort(g_sortedSystemIndices, g_sortedSystemIndices + g_systemCount, g_sortFunc);
     }
 
+    // std::memory_order_relaxed 是 C++11 标准引入的内存模型中的一种内存顺序（memory order），用于原子操作；
+    // 它是最宽松的内存顺序，不提供任何同步或排序保证
+    // 适用于不需要考虑数据依赖性和同步性的简单计数器、状态标志等场合
+    
     // stage 1: process events
     g_recvMsgStage = false;
-    g_finishedSystemCount.store(0, std::memory_order_relaxed);
-    g_systemIndex.store(0, std::memory_order_release);
+    g_finishedSystemCount.store(0, std::memory_order_relaxed);  // 将计数器g_finishedSystemCount置为0
+    g_systemIndex.store(0, std::memory_order_release);  // 主线程负责将计数器g_systemIndex置为0？？？？其他子线程等着？
     // main thread also needs to process an LP to reduce an extra thread overhead
+    // 主线程同样需要执行逻辑进程，因此下面的代码与其他（g_threadCount-1）个子线程执行的MtpInterface::ThreadFunc是一样的
     while (true)
     {
         uint32_t index = g_systemIndex.fetch_add(1, std::memory_order_acquire);
