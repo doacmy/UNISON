@@ -137,6 +137,9 @@ MultithreadedSimulatorImpl::ScheduleWithContext(uint32_t context,
                                                 const Time& delay,
                                                 EventImpl* event)
 {
+
+    // context是指什么？有什么用？
+    // LP0->LP1之间存在通信时由谁调用这个函数向m_mailbox中写入事件？
     NS_LOG_FUNCTION(this << context << delay.GetTimeStep() << event);
     LogicalProcess* remote = MtpInterface::GetSystem(NodeList::GetNode(context)->GetSystemId());
     MtpInterface::GetSystem()->ScheduleWithContext(remote, context, delay, event);
@@ -423,7 +426,6 @@ MultithreadedSimulatorImpl::Partition()
     }
 
     // transfer events to new LPs
-    // 这里是怎么体现多线程的？
     while (!eventsToBeTransferred->IsEmpty())
     {
         Scheduler::Event ev = eventsToBeTransferred->RemoveNext();

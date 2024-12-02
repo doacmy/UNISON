@@ -218,6 +218,7 @@ MtpInterface::ProcessOneRound()
     // assign logical process to threads
 
     // determine the priority of logical processes
+    // 将划分得到的所有LP根据其预估执行时间排序，执行时间越长则靠前
     if (g_sortFunc != nullptr && g_round++ % g_period == 0)
     {
         std::sort(g_sortedSystemIndices, g_sortedSystemIndices + g_systemCount, g_sortFunc);
@@ -240,6 +241,7 @@ MtpInterface::ProcessOneRound()
         {
             break;
         }
+        // 执行当前预估执行时间最长的LP,每个物理线程一次执行只能执行一个逻辑进程
         LogicalProcess* system = &g_systems[g_sortedSystemIndices[index]];
         system->ProcessOneRound();
         g_finishedSystemCount.fetch_add(1, std::memory_order_release);
@@ -254,6 +256,7 @@ MtpInterface::ProcessOneRound()
     g_systems[0].ProcessOneRound();
 
     // stage 3: receive messages
+    // 不同的LP之间是如何同步通信的？
     g_recvMsgStage = true;
     g_finishedSystemCount.store(0, std::memory_order_relaxed);
     g_systemIndex.store(0, std::memory_order_release);
